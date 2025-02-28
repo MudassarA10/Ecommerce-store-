@@ -28,7 +28,7 @@ const Logo = () => {
           />
         </svg>
       </Link>
-      <h1 className="font-inter font-bold text-2xl ">E-Commerce </h1>
+      <h1 className="font-inter font-bold text-2xl ">Zaim Store </h1>
     </div>
   );
 };

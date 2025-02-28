@@ -87,12 +87,12 @@ const Footer = () => {
                   />
                 </svg>
               </Link>
-              <h1 className="font-inter font-bold text-2xl ">E-Commerce </h1>
+              <h1 className="font-inter font-bold text-2xl ">Zaim Store </h1>
             </div>
             <div className="w-52 sm:w-52 h-1 bg-[#ef2e2e]"></div>{" "}
             {/* Purple line below logo */}
             <p className="text-white text-[0.94rem] font-light  max-w-[29rem] sm:w-80">
-              [Your Brand Name] offers a seamless shopping experience with
+              Zaim Store offers a seamless shopping experience with
               top-quality products at great prices. Enjoy fast shipping, secure
               payments, and excellent customer service!
             </p>
