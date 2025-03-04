@@ -28,10 +28,10 @@ const Navigations = () => {
   const routes = [
     { path: "/", label: i18n.t("home") },
     { path: "/", label: i18n.t("allProducts.redTitle") },
-    { path: "/", label: i18n.t("contact") },
+    { path: "/contact", label: i18n.t("contact") },
     // { path: "/allProducts", label: i18n.t("allProducts.redTitle") },
     // { path: "/contact", label: i18n.t("contact") },
-    // { path: "/about", label: i18n.t("about") },
+    { path: "/about", label: i18n.t("about") },
     // ...(currentUser
     //   ? [{ path: "/account", label: i18n.t("account") }]
     //   : [
