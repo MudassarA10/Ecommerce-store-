@@ -27,10 +27,8 @@ const Navigations = () => {
   // Map routes to their corresponding labels
   const routes = [
     { path: "/", label: i18n.t("home") },
-    { path: "/", label: i18n.t("allProducts.redTitle") },
+    { path: "/allProducts", label: i18n.t("allProducts.redTitle") },
     { path: "/contact", label: i18n.t("contact") },
-    // { path: "/allProducts", label: i18n.t("allProducts.redTitle") },
-    // { path: "/contact", label: i18n.t("contact") },
     { path: "/about", label: i18n.t("about") },
     // ...(currentUser
     //   ? [{ path: "/account", label: i18n.t("account") }]
@@ -141,6 +139,7 @@ const Navigations = () => {
                       transition: "color 0.2s",
                       "&:hover": { color: "red" },
                     }}
+                    
                   >
                     <ListItemText
                       primary={route.label}
