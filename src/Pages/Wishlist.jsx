@@ -1,142 +1,117 @@
 import { useWishlist } from "../context/WishlistContext";
-import { Link } from "react-router-dom";
-import { Grid } from "@mui/material";
-import FlashSaleItem from "../components/common/components/FlashSaleItem";
-import { ITEMS } from "../components/common/functions/items";
-import RedTitle from "../components/common/components/RedTitle";
-import WhiteButton from "../components/common/components/WhiteButton";
-import { useState } from "react";
-import { Snackbar } from "@mui/material";
-import { Alert } from "@mui/material";
 import { useCart } from "../context/CartContext";
-import { motion } from "framer-motion"; // Import motion from Framer Motion for animations
-import i18n from "../components/common/components/LangConfig";
+import { Link } from "react-router-dom";
+import { FaTrash, FaShoppingCart, FaHeart } from "react-icons/fa";
+import toast from "react-hot-toast";
 
-function Wishlist() {
-  const { wishlistItems } = useWishlist();
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [massage, setMassage] = useState("");
-  const [severity, setSeverity] = useState("success");
-  const { moveAllToCart } = useCart();
-  let relatedItems;
+const Wishlist = () => {
+  const { wishlist, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
 
-  const handleClick = () => {
-    const state = moveAllToCart(wishlistItems);
-    if (wishlistItems.length === 0 || wishlistItems === null) {
-      setMassage(i18n.t("Snackbar.noItems"));
-      setSeverity("info");
-    } else {
-      if (state) {
-        setMassage(i18n.t("Snackbar.movedToCart"));
-        setSeverity("success");
-      } else {
-        setMassage(i18n.t("Snackbar.inCart"));
-        setSeverity("info");
-      }
-    }
-    setTimeout(() => {
-      setSnackbarOpen(true);
-    }, 500);
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    // removeFromWishlist(product.id);
+    toast.success("Added to cart!", { position: "top-center" });
   };
 
-  const wishlistTypes = new Set(wishlistItems.map((item) => item.type));
-  const getRelatedItems = () => {
-    relatedItems = ITEMS.filter(
-      (item) =>
-        wishlistTypes.has(item.type) &&
-        !wishlistItems.some((wish) => wish.id === item.id)
-    ).slice(0, 5);
-    if (!relatedItems || !relatedItems.length) {
-      relatedItems = ITEMS.filter((item) => item.price > 1000).slice(0, 5);
-    }
-    return relatedItems;
+  const handleRemoveFromWishlist = (productId) => {
+    removeFromWishlist(productId);
+    toast.success("Removed from wishlist", { position: "top-center" });
   };
-  getRelatedItems();
+
   return (
-    <div className="flex flex-col md:mx-32 mt-28">
-      <div className="mx-auto md:mx-2 my-20">
-        <div className="flex justify-around md:justify-between items-center md:mr-6 mb-12">
-          <h2 className="text-lg">
-            {i18n.t("wishlist.title")} ({wishlistItems.length})
-          </h2>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow  max-w-7xl  px-4 sm:px-6 lg:px-8 py-8">
+        <div className="sm:px-14">
+          <div className="mb-8 flex flex-row gap-4 items-center md:text-xl  font-bold">
+            <span className="bg-red-500 h-10 w-5 rounded"></span>
+            <span className="text-red-500">My Wishlist</span>
+          </div>
 
-          <WhiteButton
-            name={i18n.t("whiteButtons.moveAllToBag")}
-            onClick={handleClick}
-            disabled={
-              wishlistItems.length === 0 ||
-              wishlistItems === null ||
-              snackbarOpen === true
-            }
-          />
+          <div className="group inline-block cursor-pointer mb-14">
+            <h2 className="relative text-2xl md:text-4xl font-bold text-gray-700 transition-colors duration-300 group-hover:text-red-500 after:content-[''] after:absolute after:left-0 after:-bottom-1.5 after:w-0 after:h-[3px] after:bg-red-500 after:transition-all after:duration-300 group-hover:after:w-full">
+              Explore Your Wishlist
+            </h2>
+          </div>
         </div>
+        {wishlist.length === 0 ? (
+          <div className="text-center py-20">
+            <h2 className="text-2xl font-bold text-gray-900 mb-10">
+              Your wishlist is empty
+            </h2>
+            <Link
+              to="/products"
+              className="bg-red-600 text-white hover:bg-red-500 transition-transform duration-100 transform hover:translate-y-[-4px] motion-safe:hover:animate-pulse text-sm md:text-base md:px-12 py-3 rounded px-6"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col justify-center items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {wishlist.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl relative w-[270px] md:w-[300px]"
+                >
+                  {/* Delete Icon */}
+                  <div
+                    className="absolute top-4 left-4 z-10 cursor-pointer p-2 bg-white rounded-full shadow-md transition-all duration-300 hover:scale-110"
+                    onClick={() => handleRemoveFromWishlist(product.id)}
+                  >
+                    <FaTrash className="text-red-500 text-xl hover:text-red-700" />
+                  </div>
 
-        <Grid container spacing={3} justifyContent="center" alignItems="center">
-          {wishlistItems.map((item, index) => (
-            <Grid item key={item.id} xs={0} sm={6} md={4} lg={3}>
-              <FlashSaleItem
-                item={item}
-                index={index}
-                totalItems={wishlistItems.length}
-                stars={item.stars}
-                rates={item.rates}
-                isInWishlistPage={true}
-              />
-            </Grid>
-          ))}
-        </Grid>
+                  {/* Wishlist Heart Icon */}
+                  <div
+                    className="absolute top-4 right-4 z-10 cursor-pointer p-2 bg-white rounded-full shadow-md transition-all duration-300 hover:scale-110"
+                    onClick={() => removeFromWishlist(product.id)}
+                  >
+                    <FaHeart className="text-red-500 text-xl" />
+                  </div>
+
+                  {/* Image Container */}
+                  <div className="relative flex justify-center items-center w-full h-60 md:h-64 bg-gray-200 overflow-hidden">
+                    <img
+                      src={product.image_path || "/placeholder.jpg"}
+                      alt={product.name || "Product Image"}
+                      className="max-h-52 object-contain transition-transform duration-300 hover:scale-110"
+                    />
+                  </div>
+
+                  {/* Product Details */}
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+                      {product.name.length > 20
+                        ? `${product.name.substring(0, 20)}...`
+                        : product.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      {product.description.length > 60
+                        ? `${product.description.substring(0, 60)}...`
+                        : product.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-red-500">
+                        ${product.price}
+                      </span>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full transition-transform duration-300 hover:scale-105"
+                      >
+                        <FaShoppingCart className="text-lg" />
+                        <span>Add</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-      <>
-        <div className="flex justify-between items-center md:mr-6 mx-4 ">
-          <RedTitle title={i18n.t("wishlist.justForYou")} color="black" />
-          <Link to="/allProducts">
-            <WhiteButton name={i18n.t("whiteButtons.seeAll")} />
-          </Link>
-        </div>
-        {/* Motion */}
-        <div className="relative  overflow-x-auto overflow-y-hidden flex justify-start items-center md:h-[400px] ">
-          <motion.div
-            className="flex gap-2 md:gap-12"
-            initial={{ opacity: 0, x: 0 }}
-            animate={{
-              opacity: 1,
-              transition: { duration: 0.5 },
-            }}
-          >
-            {relatedItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                whileHover={{ scale: 1.1 }}
-              >
-                <FlashSaleItem
-                  item={item}
-                  index={index}
-                  totalItems={relatedItems.length}
-                  stars={item.stars}
-                  rates={item.rates}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-        {/* Motion */}
-      </>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        vertical="top"
-      >
-        <Alert severity={severity} sx={{ width: "100%" }}>
-          {massage}
-        </Alert>
-      </Snackbar>
     </div>
   );
-}
+};
 
 export default Wishlist;

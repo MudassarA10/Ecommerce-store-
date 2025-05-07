@@ -1,252 +1,265 @@
-import i18n from "../components/common/components/LangConfig";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import CheckoutCartItem from "../components/Checkout/CheckoutCartItem";
-import RedButton from "../components/common/components/RedButton";
-import ActiveLastBreadcrumb from "../components/common/components/Link";
-import { auth, firestore } from "../Auth/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import {
+  FaCreditCard,
+  FaMoneyBill,
+  FaPaypal,
+  FaTruck,
+  FaLock,
+} from "react-icons/fa";
+import { TextField } from "@mui/material";
 
-const Checkout = () => {
-  const { cartItems } = useCart();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
+export default function Checkout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { cart, getCartTotal, clearCart } = useCart();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userId = auth.currentUser.uid;
-        const userDocRef = doc(firestore, "users", userId);
-        const userDocSnapshot = await getDoc(userDocRef);
+  const product = location.state?.product;
+  const cartItems = product ? [product] : cart;
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    paymentMethod: "cod",
+  });
 
-        if (userDocSnapshot.exists()) {
-          const userData = userDocSnapshot.data();
-          setFirstName(userData.firstName);
-          setLastName(userData.lastName);
-          setEmail(userData.email);
-          setAddress(userData.address);
-        } else {
-          console.log("User document not found");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
+  // Pricing Calculation
+  const shippingRate = 10;
+  const deliveryFee = 5;
+  const subtotal = product
+  ? product.price * (product.quantity || 1)
+  : getCartTotal();
 
-    fetchUserData();
-  }, []);
+const discount = subtotal > 100 ? subtotal * 0.1 : 0;
+const total = subtotal + shippingRate + deliveryFee - discount;
 
-  const handleSubmit = async () => {
-    console.log("Form submitted:", {
-      firstName,
-      lastName,
-      email,
-      address,
+
+  // Handle Form Change
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
-    try {
-      // Update user account data in Firestore
-      await setDoc(doc(firestore, "users", auth.currentUser.uid), {
-        firstName,
-        lastName,
-        email,
-        address,
-      });
-      console.log("User data updated successfully");
-
-      // setMessage("Account details updated successfully!");
-      // setOpen(true);
-    } catch (error) {
-      console.error("Error updating user data:", error);
-      // setError(error.message);
-      // setOpen(true);
-    }
   };
 
-  // Calculate subtotal of all cart items
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  // Handle Checkout Submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const total = subtotal; // You can calculate total including shipping, taxes, etc.
+    toast.success("Order placed successfully!");
+    clearCart();
+    navigate("/order-confirmation", {
+      state: {
+        orderDetails: {
+          items: cartItems,
+          total: total,
+          billing: formData,
+        },
+      },
+    });
+  };
 
   return (
-    <div className="max-w-screen-lg mx-auto mt-36 md:mt-48 flex flex-col md:gap-10">
-      <ActiveLastBreadcrumb
-        path={`${i18n.t("home")}/${i18n.t("redButtons.applyCoupon")}`}
-      />
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="group inline-block cursor-pointer">
+            <h2 className="relative text-2xl md:text-4xl font-bold text-gray-700 transition-colors duration-300 group-hover:text-red-500 after:content-[''] after:absolute after:left-0 after:-bottom-1.5 after:w-0 after:h-[3px] after:bg-red-500 after:transition-all after:duration-300 group-hover:after:w-full">
+            Checkout 
+            </h2>
+          </div>
+          <p className="mt-2 text-gray-600">
+            Complete your order by providing your details below
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="flex items-center mt-4 md:flex-row flex-col gap-10 md:gap-40">
-          <div className="flex items-center justify-between  mt-4">
-            <div className="flex flex-col gap-4 md:gap-12">
-              <span className="text-2xl md:text-4xl font-medium">
-                {i18n.t("checkOut.billingDetails")}
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Billing Form */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h2 className="text-2xl font-semibold mb-6">Billing Details</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <TextField
+                label="Full Name"
+                name="name"
+                required
+                fullWidth
+                variant="outlined"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              <TextField
+                label="Email Address"
+                name="email"
+                type="email"
+                required
+                fullWidth
+                variant="outlined"
+                value={formData.email}
+                onChange={handleChange}
+              />
+              <TextField
+                label="Shipping Address"
+                name="address"
+                required
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                value={formData.address}
+                onChange={handleChange}
+              />
+              <TextField
+                label="Phone Number"
+                name="phone"
+                type="tel"
+                required
+                fullWidth
+                variant="outlined"
+                value={formData.phone}
+                onChange={handleChange}
+              />
 
-              <div className="flex flex-col gap-4 md:gap-8 w-[300px] md:w-[470px]">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.firstName")} *
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.company")}
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    required
-                    // onChange={(e) => setNewPassword(e.target.value)}
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.address")} *
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.apartment")}
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    required
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.city")}*
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    required
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.phone")} *
-                  </span>
-                  <input
-                    type="text"
-                    placeholder=""
-                    required
-                    // onChange={(e) => setConfirmPassword(e.target.value)}
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm md:text-base text-gray-400">
-                    {i18n.t("checkOut.email")} *
-                  </span>
-                  <input
-                    type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder=""
-                    required
-                    // onChange={(e) => setConfirmPassword(e.target.value)}
-                    className=" rounded bg-gray-100 bg-opacity-100 px-4 py-3 text-gray-400 text-sm md:text-base focus:border outline-none focus:border-gray-300  "
-                  />
+              {/* Payment Method Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Payment Method
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <label
+                    className={`relative flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
+                      formData.paymentMethod === "cod"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={formData.paymentMethod === "cod"}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <FaMoneyBill className="text-2xl mb-2 text-blue-600" />
+                    <span className="text-sm font-medium">
+                      Cash on Delivery
+                    </span>
+                  </label>
+                  <label
+                    className={`relative flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
+                      formData.paymentMethod === "card"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={formData.paymentMethod === "card"}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <FaCreditCard className="text-2xl mb-2 text-blue-600" />
+                    <span className="text-sm font-medium">Credit Card</span>
+                  </label>
+                  <label
+                    className={`relative flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
+                      formData.paymentMethod === "paypal"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="paypal"
+                      checked={formData.paymentMethod === "paypal"}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <FaPaypal className="text-2xl mb-2 text-blue-600" />
+                    <span className="text-sm font-medium">PayPal</span>
+                  </label>
                 </div>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                className="w-full bg-red-500 text-white py-4 px-6 rounded-lg hover:bg-red-600 transition-colors duration-300 font-semibold text-lg"
+              >
+                Place Order
+              </button>
+            </form>
           </div>
 
-          <div className="flex justify-between flex-col gap-4 md:gap-8  px-4 w-full md:w-[425px]">
-            {cartItems.map((item, index) => (
-              <CheckoutCartItem
-                key={item.title}
-                item={item}
-                index={index}
-                stars={item.stars}
-                rates={item.rates}
-              />
-            ))}
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between  border-b">
-                <p className="text-base">{i18n.t("cart.subtotal")}:</p>
-                <p className="text-base">${subtotal}</p>
+          {/* Order Summary */}
+          {/* Order Summary */}
+          <div className="lg:sticky lg:top-6 space-y-6">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
+              <div className="space-y-4 mb-6">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4">
+                    <img
+                      src={item.image_path || "/placeholder.jpg"}
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        Quantity: {item.quantity || 1}
+                      </p>
+                    </div>
+                    <span className="font-medium">
+                      ${(item.price * (item.quantity || 1)).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between  border-b">
-                <p className="text-base">{i18n.t("cart.shipping")}:</p>
-                <p className="text-base">{i18n.t("cart.free")}</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between  border-b">
-                <p className="text-base">{i18n.t("cart.total")}:</p>
-                <p className="text-base">${total}</p>
-              </div>
-            </div>
-            {/* Payment methods */}
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between">
-                <p className="text-base">{i18n.t("checkOut.methods")}:</p>
-              </div>
-              <div className="flex justify-between">
-                <label>
-                  <input type="radio" name="paymentMethod" value="bank" />
-                  {i18n.t("checkOut.bank")}
-                </label>
-              </div>
-              <div className="flex justify-between">
-                <label>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cashOnDelivery"
-                  />
-                  {i18n.t("checkOut.cash")}
-                </label>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between mt-4 space-x-4 md:w-[510px]">
-              <input
-                type="text"
-                placeholder={i18n.t("checkOut.couponCode")}
-                className="border border-gray-900 rounded-md p-3  w-[170px] md:w-[280px]"
-              />
-              <RedButton name={i18n.t("redButtons.applyCoupon")} />
-            </div>
-            <div className="mr-auto">
-              <Link to="/payment">
-                <RedButton name={i18n.t("redButtons.placeOrder")} />
-              </Link>
+              {/* Pricing Breakdown */}
+              <div className="border-t border-gray-200 pt-4 space-y-3">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span>${(Number(subtotal) || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span className="flex items-center gap-2">
+                    <FaTruck className="text-red-600" /> Shipping
+                  </span>
+                  <span>${shippingRate.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Delivery Fee</span>
+                  <span>${deliveryFee.toFixed(2)}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount (10%)</span>
+                    <span>- ${discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-gray-900">
+                      Total
+                    </span>
+                    <span className="text-2xl font-bold text-red-500">
+                      ${total.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
-};
-
-export default Checkout;
+}
