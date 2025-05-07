@@ -1,72 +1,85 @@
-import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { LangProvider } from "./context/LangContext";
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
-// import { SelectedProductProvider } from "./context/SelectedProductContext";
-import i18n from "./components/common/components/LangConfig";
-import routes from "./routes";
-import Loading from "./components/common/components/Loading";
-import ScrollToTop from "./components/common/components/ScrollToTop";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminAddProduct from "./pages/admin/AdminAddProduct";
+import AdminEditProduct from "./pages/admin/AdminEditProduct";
+import Footer from "./components/Footer";
+import About from "./pages/About";
+import ContactUs from "./pages/ContactUs";
+import PrivateRoute from "./components/PrivateRoute";
+import ProductDetail from "./components/ProductDetail";
+
 function App() {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    // Simulating data loading with a timeout (replace this with actual data fetching logic)
-    const fetchData = async () => {
-      try {
-        // Fetch data or perform asynchronous tasks here
-        // For demonstration, we'll just wait for 1 second
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsLoaded(true); // Update isLoaded after data is fetched
-      } catch (error) {
-        console.error("Error loading data:", error);
-        // Handle errors (e.g., display error message)
-      }
-    };
-
-    fetchData(); // Call the function to start data loading
-  }, []);
-
   return (
-    <Router>
-      <div dir={i18n.t("dir")} className={`${i18n.t("font")} max-w-[2536px] mx-auto`}>
-        <LangProvider>
-          {/* <SelectedProductProvider> */}
-          <CartProvider>
-            <WishlistProvider>
-              {isLoaded ? (
-                <React.Fragment>
-                  <Routes>
-                    {routes.map((route, index) => (
-                      <Route
-                        key={index}
-                        path={route.path}
-                        element={<route.element />}
-                      >
-                        {route.children &&
-                          route.children.map((childRoute, childIndex) => (
-                            <Route
-                              key={childIndex}
-                              path={childRoute.path}
-                              element={<childRoute.element />}
-                            />
-                          ))}
-                      </Route>
-                    ))}
-                  </Routes>
-                  <ScrollToTop />
-                </React.Fragment>
-              ) : (
-                <Loading />
-              )}
-            </WishlistProvider>
-          </CartProvider>
-          {/* </SelectedProductProvider> */}
-        </LangProvider>
-      </div>
-    </Router>
+    <CartProvider>
+      <WishlistProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <PrivateRoute>
+                  <AdminProducts />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/products/add"
+              element={
+                <PrivateRoute>
+                  <AdminAddProduct />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/products/edit/:id"
+              element={
+                <PrivateRoute>
+                  <AdminEditProduct />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+          <Footer />
+          <Toaster position="top-center" />
+        </div>
+      </WishlistProvider>
+    </CartProvider>
   );
 }
 
 export default App;
+
