@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
