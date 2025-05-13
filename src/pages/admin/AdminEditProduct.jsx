@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -51,6 +51,31 @@ export default function AdminEditProduct() {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
+      // Normalize form values and original product values for accurate comparison
+      const normalizedValues = {
+        name: values.name.trim(),
+        description: values.description.trim(),
+        price: Number(values.price),
+        category: values.category.trim(),
+        stock: Number(values.stock),
+      };
+
+      const originalValues = {
+        name: product.name.trim(),
+        description: product.description.trim(),
+        price: Number(product.price),
+        category: product?.category?.trim(),
+        stock: Number(product.stock),
+      };
+
+      const isSameData = JSON.stringify(normalizedValues) === JSON.stringify(originalValues);
+
+      if (isSameData && !imageFile) {
+        toast('No changes detected');
+        setSubmitting(false);
+        return;
+      }
+
       let imageUrl = product.image;
 
       if (imageFile) {
@@ -61,7 +86,7 @@ export default function AdminEditProduct() {
       }
 
       const productData = {
-        ...values,
+        ...normalizedValues,
         image: imageUrl,
       };
 
@@ -78,10 +103,8 @@ export default function AdminEditProduct() {
   if (!product) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600">
-          <p className="text-gray-700">Loading...</p>
-          <p className="text-gray-500">Please wait while we load the product.</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <p className="ml-4 text-gray-700">Loading product...</p>
       </div>
     );
   }
@@ -133,7 +156,7 @@ export default function AdminEditProduct() {
                   </label>
                   <Field
                     name="name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-m d shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                   {errors.name && touched.name && (
                     <div className="text-red-600 text-sm mt-1">{errors.name}</div>
@@ -210,7 +233,7 @@ export default function AdminEditProduct() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 bg-red-500 text-nowrap text-white rounded-md hover:bg-red-600 disabled:opacity-50"
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
                   >
                     {isSubmitting ? 'Updating...' : 'Update Product'}
                   </button>
