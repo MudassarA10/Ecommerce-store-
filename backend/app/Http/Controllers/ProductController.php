@@ -84,41 +84,29 @@ class ProductController extends Controller
     }
     
 
-    // Update a product
-    public function update(Request $request, $id)
-    {
-        $product = Product::find($id);
-    
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
-    
-        $validatedData = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'sometimes|nullable|string',
-            'price' => 'sometimes|required|numeric',
-            'category_id' => 'sometimes|required|integer|exists:categories,id',
-            'stock' => 'sometimes|required|integer',
-            'image' => 'sometimes|file|image|max:2048',
-        ]);
-    
-        if ($request->hasFile('image')) {
-            // Delete old image if it exists
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-    
-            $path = $request->file('image')->store('products', 'public');
-            $validatedData['image_path'] = $path;
-            $validatedData['image_blob'] = file_get_contents($request->file('image')->getRealPath());
-        }
-    
-        $product->update($validatedData);
-    
-        return response()->json(['message' => 'Product updated successfully', 'product' => $product]);
+   public function update(Request $request, $id)
+{
+    $product = Product::find($id);
+
+    if (!$product) {
+        return response()->json(['error' => 'Product not found'], 404);
     }
-    
-    
+
+    $validatedData = $request->validate([
+        'name' => 'sometimes|required|string|max:255',
+        'description' => 'sometimes|nullable|string',
+        'price' => 'sometimes|required|numeric',
+        'category_id' => 'sometimes|required|integer|exists:categories,id',
+        'stock' => 'sometimes|required|integer',
+    ]);
+
+    $product->update($validatedData);
+
+    return response()->json([
+        'message' => 'Product updated successfully',
+        'product' => $product,
+    ]);
+}
 
     // Delete a product
     public function destroy($id)

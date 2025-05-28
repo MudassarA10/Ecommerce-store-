@@ -14,8 +14,8 @@ import {
 import toast from "react-hot-toast";
 import Slider from "react-slick";
 
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+//import "slick-carousel/slick/slick.css";
+//import "slick-carousel/slick/slick-theme.css";
 
 const ProductSlider = ({ products, disabled = false }) => {
   const { addToCart } = useCart();
